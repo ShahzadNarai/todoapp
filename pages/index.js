@@ -242,7 +242,7 @@ export default function Home({ value = 75 }) {
       <div className="container px-5 py-24 mx-auto flex flex-wrap relative">
         <div
           style={{ boxShadow: "0px 2px 10px 5px rgba(0, 0, 0, 0.2)" }}
-          className="lg:w-1/2 mb-10 lg:mb-0 overflow-hidden flex relative flex-wrap p-8 text-center rounded-lg justify-center w-full"
+          className="lg:w-1/2 mb-10 lg:mb-0 overflow-hidden overflow-y-auto flex relative flex-wrap p-8 text-center rounded-lg justify-center w-full"
         >
           {show && (
             <div className="flex flex-col md:flex-row absolute justify-center items-center min-w-full max-w-full md:min-w-[600px] md:max-w-[600px] p-4 top-20 left-0 md:top-[8%] md:left-8 h-52 z-20 bg-white shadow-lg rounded-lg gap-2">
@@ -273,8 +273,8 @@ export default function Home({ value = 75 }) {
               </button>
             </div>
           )}
-          <div className="flex justify-between items-center w-full">
-            <span className="absolute top-7 left-2">
+          <div className="flex relative justify-between items-center w-full">
+            <span className="absolute top-0 -left-6 lg:top-4 lg:-left-6">
               {" "}
               <NoteAddOutlinedIcon sx={{color: "#99a1af"}} />
             </span>
@@ -291,7 +291,7 @@ export default function Home({ value = 75 }) {
           <div className="w-full flex flex-col items-center my-6 rounded-lg h-screen">
             {/* Todo Items */}
             {todosFil.reverse().map((item) => (
-              <div key={item.id} className="flex flex-wrap w-full mt-4">
+              <div key={item.id} className="flex flex-wrap w-full p-4 ">
                 <div className="flex relative justify-between w-full items-center">
                   <div
                     className={`border border-gray-400 w-full flex flex-col px-2 py-2 rounded-lg transition ${getBgColor(
@@ -380,7 +380,7 @@ export default function Home({ value = 75 }) {
             ))}
           </div>
         </div>
-        <div class="flex flex-col flex-wrap lg:w-1/2 lg:pl-12 lg:text-left text-center">
+        <div class="flex flex-col flex-wrap w-full lg:w-1/2 lg:pl-12 lg:text-left text-center">
           <div
             style={{ boxShadow: "0px 2px 10px 5px rgba(0, 0, 0, 0.2)" }}
             className="flex flex-col mb-10 lg:items-start items-center lg:py-6 lg:pl-12 lg:text-left p-8 text-center rounded-lg h-[263px]"
