@@ -215,7 +215,8 @@ export default function Home({ value = 75 }) {
 
               <button
                 onClick={editId ? handleUpdateTodo : handleAddTodo}
-                className="border rounded bg-green-400 px-2 mx-2 "
+                disabled={!todo || !limitHours}
+                className="border disabled:bg-red-200 disabled:text-gray-400 rounded bg-green-300 px-2 mx-2 "
               >
                 {editId ? "Update" : "Save"}
               </button>
