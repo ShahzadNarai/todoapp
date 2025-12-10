@@ -1,61 +1,38 @@
 import Navbar from "@/components/Navbar";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import CircularProgress from "@mui/joy/CircularProgress";
 import NoteAddOutlinedIcon from "@mui/icons-material/NoteAddOutlined";
-import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
-import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
-import Typography from "@mui/material/Typography";
-
-// const nums = new Array(9_000_000).fill(0).map((_, i) => {
-//   return {
-//     index: i,
-//     isMagical: i === 8_000_000,
-//   };
-// });
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 export default function Home({ value = 75 }) {
   const [todo, setTodo] = useState("");
-  const [limitHours, setLimitHours] = useState(""); // user-defined time limit
+  const [limitHours, setLimitHours] = useState("");
   const [todos, setTodos] = useState([]);
   const [editId, setEditId] = useState(null);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [error, setError] = useState("");
-  // const [numbers, setNumbers] = useState(nums);
-  // const [count, setCount] = useState(0);
-
-  // const magical = numbers.find((item) => item.isMagical === true); // Expensive Computation
-
-  // Memoized Computation Improve perfomance
-  // const magical = useMemo(
-  //   () => numbers.find((item) => item.isMagical === true),
-  //   [numbers]
-  // );
-  // console.log(numbers.length);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
     const storedTodos = localStorage.getItem("todos");
-    if (storedTodos) {
-      setTodos(JSON.parse(storedTodos));
-    }
+    if (storedTodos) setTodos(JSON.parse(storedTodos));
   }, []);
 
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos]);
 
-  // Timer effect (updates every second)
   useEffect(() => {
     const interval = setInterval(() => {
       setTodos((prev) =>
         prev.map((item) =>
-          item.isRunning
-            ? { ...item, elapsed: item.elapsed + 1 } // add 1 second
-            : item
+          item.isRunning ? { ...item, elapsed: item.elapsed + 1 } : item
         )
       );
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -66,7 +43,7 @@ export default function Home({ value = 75 }) {
     }
     if (todo.trim() === "" || limitHours.trim() === "") return;
 
-    const limitSeconds = Number(limitHours) * 3600; // convert hours → seconds
+    const limitSeconds = Number(limitHours) * 3600;
 
     const newTodo = {
       id: uuidv4(),
@@ -74,9 +51,8 @@ export default function Home({ value = 75 }) {
       limit: limitSeconds,
       elapsed: 0,
       progress: false,
-      stuck: false,
       notStarted: false,
-      isRunning: true,
+      isRunning: false,
       completed: false,
     };
     setTodos([...todos, newTodo]);
@@ -88,14 +64,10 @@ export default function Home({ value = 75 }) {
   const handleEdit = (id) => {
     const t = todos.find((i) => i.id === id);
     setTodo(t.todo);
-    setLimitHours(t.limit / 3600); // convert seconds → hours
+    setLimitHours(t.limit / 3600);
     setEditId(id);
     setOpenDropdown(null);
     setShow(true);
-    if (!limitHours) {
-      setError("Please enter time limit.");
-      return;
-    }
   };
 
   const handleUpdateTodo = () => {
@@ -105,14 +77,9 @@ export default function Home({ value = 75 }) {
     }
     const updatedTodos = todos.map((item) =>
       item.id === editId
-        ? {
-            ...item,
-            todo,
-            limit: Number(limitHours) * 3600,
-          }
+        ? { ...item, todo, limit: Number(limitHours) * 3600 }
         : item
     );
-
     setTodos(updatedTodos);
     setTodo("");
     setLimitHours("");
@@ -149,24 +116,7 @@ export default function Home({ value = 75 }) {
           ? {
               ...item,
               completed: false,
-              stuck: false,
               progress: true,
-              isRunning: true,
-            }
-          : item
-      )
-    );
-    setOpenDropdown(null);
-  };
-  const handleStuck = (id) => {
-    setTodos(
-      todos.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              completed: false,
-              stuck: true,
-              progress: false,
               isRunning: true,
             }
           : item
@@ -178,13 +128,14 @@ export default function Home({ value = 75 }) {
   const handlePauseResume = (id) => {
     setTodos(
       todos.map((item) =>
-        item.id === id ? { ...item, isRunning: !item.isRunning } : item
+        item.id === id
+          ? { ...item, progress: true, isRunning: !item.isRunning }
+          : item
       )
     );
     setOpenDropdown(null);
   };
 
-  // Format time
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -192,35 +143,22 @@ export default function Home({ value = 75 }) {
     return `${h}h ${m}m ${s}s`;
   };
 
-  // Determine background color
   const getBgColor = (item) => {
-    if (item.completed) {
+    if (item.completed)
       return item.elapsed > item.limit ? "bg-red-300" : "bg-green-300";
-    } else if (item.progress) {
-      return "bg-blue-300";
-    } else if (item.stuck) {
-      return "bg-orange-300";
-    }
+    if (item.progress) return "bg-blue-300";
     return "bg-white";
   };
 
-  const [show, setShow] = useState(false);
-
-  const onToggleShow = () => {
-    setShow(!show);
-  };
-
-  const onToggledropdown = (id) => {
+  const onToggleShow = () => setShow(!show);
+  const onToggledropdown = (id) =>
     setOpenDropdown(openDropdown === id ? null : id);
-  };
 
   const filteredTodos = todos.filter((item) => item.completed);
   const todosFil = todos.filter((item) => !item.completed);
-  console.log(filteredTodos, "filteredTodos");
 
   const totalTasks = todos.length;
-
-  const completedTasks = todos.filter((t) => t.completed).length;
+  const completedTasks = filteredTodos.length;
   const inProgressTasks = todos.filter(
     (t) => t.progress && !t.completed
   ).length;
@@ -228,7 +166,6 @@ export default function Home({ value = 75 }) {
     (t) => !t.completed && !t.progress && !t.stuck
   ).length;
 
-  // Convert to %
   const completedPercent =
     totalTasks === 0 ? 0 : (completedTasks / totalTasks) * 100;
   const progressPercent =
@@ -236,13 +173,24 @@ export default function Home({ value = 75 }) {
   const notStartedPercent =
     totalTasks === 0 ? 0 : (notStartedTasks / totalTasks) * 100;
 
+  // Handle Drag and Drop
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const { source, destination } = result;
+    let items = [...todos];
+    const [reorderedItem] = items.splice(source.index, 1);
+    items.splice(destination.index, 0, reorderedItem);
+    setTodos(items);
+  };
+
   return (
     <>
       <Navbar />
       <div className="container px-5 py-24 mx-auto flex flex-wrap relative">
         <div
-          style={{ boxShadow: "0px 2px 10px 5px rgba(0, 0, 0, 0.2)" }}
           className="lg:w-1/2 mb-10 lg:mb-0 overflow-hidden overflow-y-auto flex relative flex-wrap p-8 text-center rounded-lg justify-center w-full"
+          style={{ boxShadow: "0px 2px 10px 5px rgba(0,0,0,0.2)" }}
         >
           {show && (
             <div className="flex flex-col md:flex-row absolute justify-center items-center min-w-full max-w-full md:min-w-[600px] md:max-w-[600px] p-4 top-20 left-0 md:top-[8%] md:left-8 h-52 z-20 bg-white shadow-lg rounded-lg gap-2">
@@ -273,112 +221,122 @@ export default function Home({ value = 75 }) {
               </button>
             </div>
           )}
-          <div className="flex relative justify-between items-center w-full">
-            <span className="absolute top-0 -left-6 lg:top-4 lg:-left-6">
-              {" "}
-              <NoteAddOutlinedIcon sx={{color: "#99a1af"}} />
-            </span>
 
+          <div className="flex relative justify-between items-center w-full">
+            <span className="absolute top-0 -left-6 lg:-left-6">
+              <NoteAddOutlinedIcon sx={{ color: "#99a1af" }} />
+            </span>
             <h1 className="text-sm text-red-400 font-semibold ml-1">To-Do</h1>
             <div
               onClick={onToggleShow}
               className="mx-2 flex justify-center items-center cursor-pointer text-gray-400"
             >
-              <span className="text-red-400"><AddOutlinedIcon/></span>Add task
+              <span className="text-red-400">
+                <AddOutlinedIcon />
+              </span>
+              Add task
             </div>
           </div>
 
-          <div className="w-full flex flex-col items-center my-6 rounded-lg h-screen">
-            {/* Todo Items */}
-            {todosFil.reverse().map((item) => (
-              <div key={item.id} className="flex flex-wrap w-full p-4 ">
-                <div className="flex relative justify-between w-full items-center">
-                  <div
-                    className={`border border-gray-400 w-full flex flex-col px-2 py-2 rounded-lg transition ${getBgColor(
-                      item
-                    )}`}
-                  >
-                    <span className="font-bold">{item.todo}</span>
-
-                    {/* Timer */}
-                    <span className="text-sm text-gray-700">
-                      Time: {formatTime(item.elapsed)}
-                    </span>
-
-                    <span className="text-sm text-gray-500">
-                      Limit: {formatTime(item.limit)}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      Status:{" "}
-                      {item.stuck === true
-                        ? "Stuck"
-                        : item.progress === true
-                        ? "In Progress"
-                        : item.completed === true
-                        ? "Completed"
-                        : "Not Started"}
-                    </span>
-                    {/* Dropdown button */}
-                    <button
-                      onClick={() => onToggledropdown(item.id)}
-                      className="flex items-center cursor-pointer justify-center top-0 right-0 absolute px-3 font-bold text-xl rounded mx-2"
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="todosDroppable">
+              {(provided) => (
+                <div
+                  className="w-full flex flex-col items-center my-6 rounded-lg h-screen"
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                >
+                  {todosFil.map((item, index) => (
+                    <Draggable
+                      key={item.id}
+                      draggableId={item.id}
+                      index={index}
                     >
-                      ...
-                    </button>
-                  </div>
-                  {/* Dropdown */}
-                  {openDropdown === item.id && (
-                    <div
-                      style={{
-                        boxShadow: "0px 2px 10px 5px rgba(0, 0, 0, 0.2)",
-                      }}
-                      className="absolute right-0 top-8 bg-white rounded border w-36 z-50"
-                    >
-                      <button
-                        className="w-full px-3 py-2 text-left hover:bg-gray-100"
-                        onClick={() => handlePauseResume(item.id)}
-                      >
-                        {item.isRunning ? "Pause" : "Resume"}
-                      </button>
-                      <button
-                        className="w-full px-3 py-2 text-left hover:bg-gray-100"
-                        onClick={() => handleProgress(item.id)}
-                      >
-                        Progress
-                      </button>
-                      <button
-                        className="w-full px-3 py-2 text-left hover:bg-gray-100"
-                        onClick={() => handleStuck(item.id)}
-                      >
-                        {item.isRunning ? "Stuck" : "Resume"}
-                      </button>
+                      {(provided) => (
+                        <div
+                          className="flex flex-wrap w-full p-4"
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <div className="flex relative justify-between w-full items-center">
+                            <div
+                              className={`border border-gray-400 w-full flex flex-col px-2 py-2 rounded-lg transition ${getBgColor(
+                                item
+                              )}`}
+                            >
+                              <span className="font-bold">{item.todo}</span>
+                              <span className="text-sm text-gray-700">
+                                Time: {formatTime(item.elapsed)}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                Limit: {formatTime(item.limit)}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                Status:{" "}
+                                {item.progress
+                                  ? "In Progress"
+                                  : item.completed
+                                  ? "Completed"
+                                  : "Not Started"}
+                              </span>
+                              <button
+                                onClick={() => onToggledropdown(item.id)}
+                                className="flex items-center cursor-pointer justify-center top-0 right-0 absolute px-3 font-bold text-xl rounded mx-2"
+                              >
+                                ...
+                              </button>
+                            </div>
+                            {openDropdown === item.id && (
+                              <div
+                                style={{
+                                  boxShadow: "0px 2px 10px 5px rgba(0,0,0,0.2)",
+                                }}
+                                className="absolute right-0 top-8 bg-white rounded border w-36 z-50"
+                              >
+                                <button
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100"
+                                  onClick={() => handlePauseResume(item.id)}
+                                >
+                                  {item.isRunning ? "Pause" : "Resume"}
+                                </button>
+                                <button
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100"
+                                  onClick={() => handleProgress(item.id)}
+                                >
+                                  Progress
+                                </button>
 
-                      <button
-                        className="w-full px-3 py-2 text-left hover:bg-gray-100"
-                        onClick={() => handleToggleComplete(item.id)}
-                      >
-                        Completed
-                      </button>
-
-                      <button
-                        className="w-full px-3 py-2 text-left hover:bg-gray-100"
-                        onClick={() => handleEdit(item.id)}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        className="w-full px-3 py-2 text-left hover:bg-gray-100"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+                                <button
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100"
+                                  onClick={() => handleToggleComplete(item.id)}
+                                >
+                                  Completed
+                                </button>
+                                <button
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100"
+                                  onClick={() => handleEdit(item.id)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100"
+                                  onClick={() => handleDelete(item.id)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
         <div class="flex flex-col flex-wrap w-full lg:w-1/2 lg:pl-12 lg:text-left text-center">
           <div
@@ -386,7 +344,9 @@ export default function Home({ value = 75 }) {
             className="flex flex-col mb-10 lg:items-start items-center lg:py-6 lg:pl-12 lg:text-left p-8 text-center rounded-lg h-[263px]"
           >
             <h1 className="flex justify-start items-center w-full text-sm text-red-400 font-semibold mb-4">
-            <span className="mr-1"><AssignmentTurnedInOutlinedIcon sx={{color: "#99a1af"}} /></span>
+              <span className="mr-1">
+                <AssignmentTurnedInOutlinedIcon sx={{ color: "#99a1af" }} />
+              </span>
               Task Status
             </h1>
 
@@ -489,9 +449,7 @@ export default function Home({ value = 75 }) {
                       </span>
                       <span className="text-sm text-gray-500">
                         Status:{" "}
-                        {item.stuck === true
-                          ? "Stuck"
-                          : item.progress === true
+                        {item.progress === true
                           ? "In Progress"
                           : item.completed === true
                           ? "Completed"
@@ -515,23 +473,10 @@ export default function Home({ value = 75 }) {
                       >
                         <button
                           className="w-full px-3 py-2 text-left hover:bg-gray-100"
-                          onClick={() => handlePauseResume(item.id)}
-                        >
-                          {item.isRunning ? "Pause" : "Resume"}
-                        </button>
-                        <button
-                          className="w-full px-3 py-2 text-left hover:bg-gray-100"
                           onClick={() => handleProgress(item.id)}
                         >
                           Progress
                         </button>
-                        <button
-                          className="w-full px-3 py-2 text-left hover:bg-gray-100"
-                          onClick={() => handleStuck(item.id)}
-                        >
-                          {item.isRunning ? "Stuck" : "Resume"}
-                        </button>
-
                         <button
                           className="w-full px-3 py-2 text-left hover:bg-gray-100"
                           onClick={() => handleToggleComplete(item.id)}
