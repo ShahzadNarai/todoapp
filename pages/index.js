@@ -5,7 +5,9 @@ import CircularProgress from "@mui/joy/CircularProgress";
 import NoteAddOutlinedIcon from "@mui/icons-material/NoteAddOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext } from '@hello-pangea/dnd'
+import { Droppable } from '@hello-pangea/dnd'
+import { Draggable } from '@hello-pangea/dnd'
 
 export default function Home({ value = 75 }) {
   const [todo, setTodo] = useState("");
